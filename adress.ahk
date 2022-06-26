@@ -1,5 +1,6 @@
+; Check auf Veränderungen vor Speichern/Mehrnutzerfähigkeit
+;
 ; mit Land + letzter Änderung
-; Check auf Veränderungen vor Speichern
 ; statt Buttons: Icons + Tooltips 
 ; variable Zahl Telefonnummern/Mailadressen
 ; zum Wählen der Tel.nr. mit Fritzbox fb_anruf.ahk aufrufen
@@ -16,7 +17,7 @@ if 1=
 groups=Firma|Privat|obsolet|alle
 aPrinter:="Adressetiketten"
 onexit,ende
-hCurs:=DllCall("LoadCursor","UInt",NULL,"Int",32649,"UInt") 
+hCurs:=DllCall("LoadCursor","UInt",NULL,"Int",32649,"UInt")
 OnMessage(0x200,"WM_MOUSEMOVE") 
 regread,row1,HKCU,Software\Clients\Mail
 regread,row2,HKLM,SOFTWARE\Clients\Mail\%row1%\Protocols\mailto\shell\open\command
@@ -38,12 +39,12 @@ ButtonCopy_TT=Adresse in Zwischenablage kopieren
 GuiClose_TT=Programm beenden (Escape)
 privat_TT=Aktiviert = privater Absender wird gedruckt`nAusgegraut = kein Absender
 
-Gui,+Owner 
+Gui,+Owner
 Gui,Margin,2,5
-Gui,Add,Picture,Section x12 y7 w16 h-1 Icon23,c:\windows\system32\shell32.dll 
+Gui,Add,Picture,Section x12 y7 w16 h-1 Icon23,c:\windows\system32\shell32.dll
 Gui,Margin,10,5
 Gui,Add,Edit,ys-1 W100 H20 gsearch vsuchtext,%suchtext%
-Gui,Add,Text,xs+35 ys+2,Suche 
+Gui,Add,Text,xs+35 ys+2,Suche
 Gui,Font,s11
 Gui,Add,ListView,x2 ys+25 r30 w615 gMyListView vMyListView Sort -Multi,Name|Name 2|Straße|PLZ|Ort|Telefon|E-Mail|Fax|Internet|Kdnr|Bemerkung|Gruppe|Land|l. Änderung
 f1=150|100|100|50|100|100|100|100|100|100|1|20|100|85
@@ -71,13 +72,11 @@ if suchtext>
   GuiControl, Hide,Static2
 blockinput,on
 LV_Delete()
-GuiControl,Hide,MyListView 
+GuiControl,Hide,MyListView
 Loop,parse,f1,`n,`r
 {
-  StringSplit,row,A_Loopfield,|
-  stringreplace,row6,row6,¶,`n,a
-  stringreplace,row7,row7,¶,`n,a
-  stringreplace,row11,row11,¶,`n,a  
+  stringreplace,row,A_Loopfield,¶,`n,a
+  StringSplit,row,row,|
   if instr(row1,suchtext) and (instr(group,row12)=1 or group="alle")
     LV_Add("", row1, row2,row3,row4,row5,row6,row7,row8,row9,row10,row11,row12,row13,row14)
 }
@@ -102,7 +101,7 @@ F5::
 goto,ButtonAnrufen
 F6::
 goto,ButtonEMail
-<^>!<::return 
+<^>!<::return
 
 #ifwinactive,^Adressen
 ~Del::
@@ -133,23 +132,36 @@ ButtonBearbeiten:
 MyListView:
 if (A_GuiEvent="ColClick")
   return
-neuanlage*=2 
-ifwinexist,Adressdaten,Na&me 2 
+neuanlage*=2
+ifwinexist,Adressdaten,Na&me 2
 {
   msgbox,,Achtung,Erst anderes Adressdaten-Fenster schließen!
   winactivate
   return
 }
-ControlGet, Zeile, List, Count Focused, SysListView321, Adressen
 if neuanlage=2
   Loop % LV_GetCount("Col")
     Row%a_index%:=""
-else
-  Loop % LV_GetCount("Col") {
-    LV_GetText(Row%a_index%,Zeile,a_index)
-    OldRow%a_index%:=Row%a_index%
-  }
-
+else {
+  ControlGet, Zeile, List, Count Focused, SysListView321, Adressen
+  ControlGet, Zeile2, List, Focused, SysListView321, Adressen
+  stringreplace,zeile2,zeile2,%A_Tab%,|,a
+  stringreplace,zeile2,zeile2,`n,¶,a
+  fileread,f1,%database%
+  Loop,parse,f1,`n,`r
+    if (A_Loopfield=zeile2) {
+      stringreplace,zeile2,zeile2,¶,`n,a
+      stringsplit,row,zeile2,|
+      zeile2=
+      break
+    }
+}
+if (zeile2>"") {
+  msgbox,1,Adressdaten,Der Datensatz wurde zwischenzeitlich geändert und kann nicht bearbeitet werden.`n`nMöchten Sie die Datei neu einlesen?
+ifmsgbox,Ok
+  run,ahk.exe "%A_ScriptFullPath%"
+return
+} 
 if (neuanlage<>-2) {
   Gui,2:Font,s11
   EOpts:="x100 yp-3 W300",TOpts:="x12 yp+30"
@@ -189,7 +201,7 @@ if (neuanlage<>-2) {
     Gui,2:Add,Picture,x430 y179 w32 h-1 vemailen gButtonEMail,%Mailer%
   else
     Gui,2:Add,Picture,x430 y179 w32 h-1 vemailen gButtonEMail Icon215,c:\windows\system32\shell32.dll
- 
+
   row14n:=substr(row14,5,2) . "." . substr(row14,3,2) . "." . substr(row14,1,2) . " " . substr(row14,7,2) . ":" . substr(row14,9,2)
   Gui,2:Add,Text,x410 y300 0x2,letzte Änderung:`n%row14n%
   Gui,2:Add,Button,Default x410 y346 W80 vSpeichern,&Speichern
@@ -199,52 +211,76 @@ if (neuanlage<>-2) {
 }
 
 2ButtonSpeichern:
-Gui,2:Submit,NoHide
-GuiControlGet, FocusedControl, FocusV
-alt:="",f2:=""
-stringreplace,row11,row11,`n,¶,a  
-stringreplace,Bemerkung,Bemerkung,`n,¶,a
-stringreplace,row6,row6,`n,¶,a
-stringreplace,Telefon,Telefon,`n,¶,a
-stringreplace,row7,row7,`n,¶,a
-stringreplace,email,email,`n,¶,a
-loop,12
-  alt.= row%a_index% . "|"
-alt.=row13
-neu=%name%|%name2%|%Strasse%|%PLZ%|%Ort%|%Telefon%|%email%|%Fax%|%Internet%|%Kdnr%|%Bemerkung%|%Gruppe%|%Land%
+gosub,checkchanged
 if (neuanlage=-2) {
   msgbox,257,Adressdaten,Dieser Datensatz wird unwiderruflich gelöscht:`n`n%alt%
   ifmsgbox,OK
   {
-    LV_Delete(zeile)
-    Gui,Show,,% "Adressen (" . LV_GetCount() . ")"
-    Loop,parse,f1,`n,`r       
-      f2.=(A_Loopfield=alt . "|" . row14) ? "" : A_Loopfield . "`n"
-    stringtrimright,f1,f2,1   
-    filewrite(database,f1)
+    cflag=1
+    hnd:=fileopen(database,"r-w")
+    fileread,f1,%database%
+    Loop,parse,f1,`n,`r
+      f2.=(A_Loopfield=alt . "|" . row14) ? cflag:="" : A_Loopfield . "`n"
+    stringtrimright,f1,f2,1
+    if !cflag {
+      fileclose(hnd)
+      if filewrite(database,f1) {
+        LV_Delete(zeile)
+        Gui,Show,,% "Adressen (" . LV_GetCount() . ")"
+      } else
+        msgbox,,Adressdaten,Vorgang nicht möglich`, da die Daten zur Zeit gesperrt sind.
+    }
+    else
+    {
+      fileclose(hnd)
+      msgbox,1,Adressdaten,Vorgang nicht möglich`, da die Daten bereits außerhalb geändert wurden.`n`nMöchten Sie die Daten neu einlesen?
+      ifmsgbox,Ok
+        run,ahk.exe "%A_ScriptFullPath%"
+    }
   }
 } else {
-  if (alt<>neu and FocusedControl<>"Speichern") 
+  if (alt=neu) or (neuanlage=2 and neu="||")
+  {
+    Gui,2:Destroy
+    return
+  }
+  if (FocusedControl<>"Speichern")
     msgbox,35,Adressdaten,Geänderte Daten speichern?
   ifmsgbox,Cancel
     return
-  Gui,2:Destroy
   ifmsgbox,No
+  {
+    Gui,2:Destroy
     return
-  if (neuanlage=2 and neu="||")
-    return
+  }
   formattime,row14n,,yyMMddHHmm
   if (alt<>neu) {
+    cflag=
     if neuanlage=2
       f1.=(f1="" ? "" : "`n") . neu . "|" . row14n
     else {
-      Loop,parse,f1,`n,`r      
-        f2.=(A_Loopfield=(alt . "|" . row14)) ? neu . "|" . row14n . "`n" : A_Loopfield . "`n"
-      stringtrimright,f1,f2,1  
+      hnd:=fileopen(database,"r-w")
+      fileread,f1,%database%
+      Loop,parse,f1,`n,`r
+        f2.=(A_Loopfield=(alt . "|" . row14)) ? neu . "|" . cflag:=row14n . "`n" : A_Loopfield . "`n"
+      stringtrimright,f1,f2,1
+      fileclose(hnd)
     }
-    row14:=row14n
-    filewrite(database,f1)
-    settimer,list_akt,-1
+    if (neuanlage=2) and !fileexist(database)
+      fileappend,#,%database%
+    if (neuanlage=2) or cflag {
+      if filewrite(database,f1) {
+        row14:=row14n
+        settimer,list_akt,-1
+      } else
+        msgbox,,Adressdaten,Speichern nicht möglich`, da die Daten zur Zeit gesperrt sind.
+    }
+    else
+    {
+      msgbox,1,Adressdaten,Die Daten können nicht gespeichert werden`, da sie bereits außerhalb geändert wurden.`n`nMöchten Sie die Daten neu einlesen?
+      ifmsgbox,Ok
+        run,ahk.exe "%A_ScriptFullPath%"
+    }
   }
 }
 return
@@ -255,6 +291,7 @@ GuiClose:
 ExitApp
 
 list_akt:
+Gui,2:Destroy
 stringreplace,Bemerkung,Bemerkung,¶,`n,a
 stringreplace,Telefon,Telefon,¶,`n,a
 stringreplace,email,email,¶,`n,a
@@ -264,7 +301,7 @@ if instr(name,suchtext) and (instr(group,gruppe)=1 or group="alle")
   else
     LV_Modify(Zeile,"Focus Select",name,name2,Strasse,PLZ,Ort,Telefon,email,Fax,Internet,Kdnr,Bemerkung,Gruppe,Land,row14)
 else
-  if neuanlage<>2 
+  if neuanlage<>2
     LV_Delete(zeile)
 neuanlage=
 Gui,Show,,% "Adressen (" . LV_GetCount() . ")"
@@ -273,13 +310,32 @@ return
 2ButtonAbbrechen:
 2GuiEscape:
 2GuiClose:
-Gui,2:Destroy
+gosub,checkchanged
+if (alt=neu)
+  Gui,2:Destroy
+else
+  msgbox,35,Adressdaten,Verlassen und Änderungen verwerfen?
+ifmsgbox,Yes
+  Gui,2:Destroy
+return
+
+checkchanged:
+Gui,2:Submit,NoHide
+GuiControlGet, FocusedControl, FocusV
+alt:="",f2:=""
+stringreplace,Bemerkung,Bemerkung,`n,¶,a
+stringreplace,Telefon,Telefon,`n,¶,a
+stringreplace,email,email,`n,¶,a
+loop,12
+  alt.= row%a_index% . "|"
+stringreplace,alt,alt,`n,¶,a
+alt.=row13
+neu=%name%|%name2%|%Strasse%|%PLZ%|%Ort%|%Telefon%|%email%|%Fax%|%Internet%|%Kdnr%|%Bemerkung%|%Gruppe%|%Land%
 return
 
 ButtonCopy:
-ControlGet, Zeile, List, Count Focused, SysListView321, Adressen
-Loop % LV_GetCount("Col")
-  LV_GetText(Row%a_index%,Zeile,a_index)
+ControlGet, Zeile, List, Focused, SysListView321, Adressen
+stringsplit,row,zeile,%A_Tab%
 name:=row1,name2:=row2,strasse:=row3,plz:=row4,ort:=row5,kdnr:=row10
 Gui,2:Submit,NoHide
 name.=name2>"" ? "`r`n" . name2 : ""
@@ -291,10 +347,7 @@ tooltip
 return
 
 ButtonAnrufen:
-ControlGet, Zeile, List, Count Focused, SysListView321, Adressen
-Loop % LV_GetCount("Col")
-  LV_GetText(Row%a_index%,Zeile,a_index)
-name:=Row1,telefon:=Row6
+ControlGet, telefon, List, Focused Col6, SysListView321, Adressen
 
 ifwinexist,^Wählen$
 {
@@ -320,7 +373,7 @@ loop,parse,telefon,`n,`r
         tel%nr_anz%:=nr
       }
     }
-if (nr_anz>1) and (a_guicontrol<>"Anrufen") { 
+if (nr_anz>1) and (a_guicontrol<>"Anrufen") {
   Gui,3:Add,Button,Default Section x12 yp+40 W80,&OK
   Gui,3:Add,Button,xp+110 ys W80,&Abbrechen
   Gui,3:Show,,Wählen
@@ -329,11 +382,12 @@ if (nr_anz>1) and (a_guicontrol<>"Anrufen") {
 
 NrSelect:
 if CursorTaste=1
-  return 
+  return
 
 3ButtonOK:
 Gui,3:Submit
 nr:=tel%tel%
+Gui,3:Destroy
 if nr>
 {
   Gui,4:Add,Text,Section x12 y20,Nummer: 
@@ -365,8 +419,7 @@ Gui,3:Destroy
 return
 
 ButtonEMail:
-ControlGet, Zeile, List, Count Focused, SysListView321, Adressen
-LV_GetText(email,Zeile,7)
+ControlGet, email, List, Focused Col7, SysListView321, Adressen
 
 Gui,2:Submit,NoHide
 row1:=""
@@ -375,18 +428,13 @@ run,%Mailer% mailto:%row1%
 return
 
 ButtonDruck:
-ControlGet, Zeile, List, Count Focused, SysListView321, Adressen
-Loop % LV_GetCount("Col")
-  LV_GetText(Row%a_index%,Zeile,a_index)
-name:=Row1,strasse:=Row3,plz:=Row4,ort:=Row5,gruppe:=Row12,land:=Row13
-if gruppe=B
-  name:=Row2 . " " . Row1
-else
-  name2:=Row2
+ControlGet, Zeile, List, Focused, SysListView321, Adressen
+stringsplit,row,zeile,%A_Tab%
+name:=row1,name2:=row2,strasse:=Row3,plz:=Row4,ort:=Row5,gruppe:=Row12,land:=Row13
 2ButtonEtikettendruck:
 2ButtonEtikettBüwa:
 Gui,2:Submit,NoHide
-ypos:=(name2>"") ? 200 : 160 
+ypos:=(name2>"") ? 200 : 160
 ypos:=(a_guicontrol="büwa") ? ypos+40 : ypos
 ypos:=(land>"") ? ypos+40 : ypos
 if (privat=-1)
@@ -398,7 +446,7 @@ if (privat=1)
 else
   if privat<>-1
     out.="TEXT 1 240 0 Absender Geschäft...`n"
-ypos:=(privat=-1) ? -40 : 10 
+ypos:=(privat=-1) ? -40 : 10
 if (a_guicontrol="büwa") {
   ypos+=40,out.="TEXT 2 240 " . ypos . " BÜWA`n"
 }
@@ -418,28 +466,51 @@ ifmsgbox,Ok
 return
 
 filewrite(filename,byref data) {
-file=%filename%.tmp
-filedelete,%file%
-fileappend,%data%,%file%
-filemove,%filename%,%filename%.old,1
-ifexist,%filename%
-  exit
-else
-  filemove,%file%,%filename%,1
-ifexist,%filename%
-  filedelete,%filename%.old
-else
-  exit
+filecopy,%filename%,%filename%.bak,1
+if fileexist(filename . ".bak") and (hnd:=fileopen(filename,"w-w"))>0 {
+  ok:=DllCall("WriteFile","UInt",hnd,"UChar",&data,"UInt",strlen(data),"UInt *", Written,"UInt",0)
+  fileclose(hnd)
+  if strlen(data)=written and ok
+    return 1
+  filecopy,%filename%.bak,%filename%,1
+  msgbox,,Fehler %ok% beim Speichern von %filename%,% strlen(data) . " Bytes gesamt, gespeichert: " . written
+}
+}
+
+fileopen(filename,flags) {
+Access= 0
+GENERIC_WRITE= 0x40000000
+GENERIC_READ = 0x80000000
+FILE_SHARE_READ  = 1
+CREATE_ALWAYS    = 2
+OPEN_ALWAYS      = 4
+Share:=FILE_SHARE_READ
+if (flags="w-w") {
+  Access:=GENERIC_WRITE
+  Creation:=CREATE_ALWAYS
+}
+if (flags="r-w") {
+  Access:=GENERIC_READ
+  Creation:=OPEN_ALWAYS
+}
+hFile := DllCall("CreateFile", "Str", FileName, "UInt", Access, "UInt", Share, "UInt", 0, "UInt", Creation, "UInt", 0, "UInt", 0)
+if hFile<0
+  msgbox,,Fehler %hFile% in fileopen("%filename%"`,"%flags%"),Die Datei kann nicht gespeichert werden.
+return % hFile
+}
+
+fileclose(handle) {
+DllCall("CloseHandle", "UInt", handle) 
 }
 
 WM_MOUSEMOVE(wParam,lParam) 
 { 
 Global hCurs 
-ifwinactive,Wählen
+ifwinactive,Telefonanruf
   return
 static CurrControl, PrevControl, _TT
 MouseGetPos,,,,ctrl
-stringtrimleft,nmr,ctrl,6 
+stringtrimleft,nmr,ctrl,6
 if (WinActive("Adressen") and nmr>3 and nmr<20) or (WinActive("Adressdaten") and nmr>12 and nmr<16)
   DllCall("SetCursor","UInt",hCurs) 
 CurrControl := A_GuiControl
@@ -483,15 +554,15 @@ if ! SetDefaultPrinter(aPrinter) {
 VarSetCapacity(pd,66,0),NumPut(66,pd),DocName:="AHK Doc"
 NumPut( aPrinter="" ? (PD_RETURNDC:=0x100) : (PD_RETURNDC:=0x100)|(PD_RETURNDEFAULT:=0x400),pd,20)
 if DllCall("comdlg32\PrintDlgA","uint",&pd) {
-  if (hDevMode := NumGet(pd,8)) 
+  if (hDevMode := NumGet(pd,8))
     DllCall("GlobalFree","uint",hDevMode)
   if (hDevNames := NumGet(pd,12))
     DllCall("GlobalFree","uint",hDevNames)
   if (hDC := NumGet(PD, 16)) {
     PhysWidth   := DllCall("GetDeviceCaps", "UInt", hDC, "Int", 0x6E, "Int") 
-    PhysHeight  := DllCall("GetDeviceCaps", "UInt", hDC, "Int", 0x6F, "Int")
-    PhysOffsetX := DllCall("GetDeviceCaps", "UInt", hDC, "Int", 0x70, "Int")
-    PhysOffsetY := DllCall("GetDeviceCaps", "UInt", hDC, "Int", 0x71, "Int")
+    PhysHeight  := DllCall("GetDeviceCaps", "UInt", hDC, "Int", 0x6F, "Int") 
+    PhysOffsetX := DllCall("GetDeviceCaps", "UInt", hDC, "Int", 0x70, "Int") 
+    PhysOffsetY := DllCall("GetDeviceCaps", "UInt", hDC, "Int", 0x71, "Int") 
     VarSetCapacity(RECT,16,0),NumPut(PhysOffsetX, RECT, 0, "Int"),NumPut(PhysOffsetY, RECT, 4, "Int")
     NumPut(PhysWidth - PhysOffsetX, RECT,  8, "Int"),NumPut(PhysHeight - PhysOffsetY, RECT, 12, "Int")
     NumPut(VarSetCapacity(DI, 20, 0), DI),NumPut(&DocName, DI, 4)
