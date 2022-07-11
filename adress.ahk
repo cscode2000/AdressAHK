@@ -27,19 +27,13 @@ setworkingdir,%A_ScriptDir%
 adr_ini=%a_appdata%\cssettings.ini
 if 1=
   database=%a_appdata%\adress.dat
-iniread,guipos,%adr_ini%,adressen,guipos
-iniread,gui2pos,%adr_ini%,adressen,gui2pos 
-iniread,gui3pos,%adr_ini%,adressen,gui3pos 
-iniread,gui4pos,%adr_ini%,adressen,gui4pos 
-iniread,groups,%adr_ini%,adressen,groups
+iniread,guipos,%adr_ini%,adressen,guipos,%a_space%
+iniread,gui2pos,%adr_ini%,adressen,gui2pos,%a_space%
+iniread,gui3pos,%adr_ini%,adressen,gui3pos,%a_space%
+iniread,gui4pos,%adr_ini%,adressen,gui4pos,%a_space%
+iniread,groups,%adr_ini%,adressen,groups,%a_space%
 if groups=
-  iniwrite,% groups="Firma|Privat|obsolet|alle",%adr_ini%,adressen,groups
-/*
-absender=Absender Geschäft...
-abs_privat=Absender privat...
-EtikettP=Adressetiketten
-UmschlagP=
-*/
+  iniwrite,% groups:="Firma|Privat|obsolet|alle",%adr_ini%,adressen,groups
 sysget,cpt,4
 sysget,bdrx,32
 sysget,bdry,33
@@ -518,12 +512,12 @@ if winactive("ahk_id " MainID) {
 } else
   N=N
 Gui,2:Submit,NoHide
-iniread,absender,%adr_ini%,adressen,absender
-iniread,abs_privat,%adr_ini%,adressen,abs_privat
+iniread,absender,%adr_ini%,adressen,absender,%a_space%
+iniread,abs_privat,%adr_ini%,adressen,abs_privat,%a_space%
 if absender=
-  iniwrite,% absender="Absender Geschäft...",%adr_ini%,adressen,absender
+  iniwrite,% absender:="Absender Geschäft...",%adr_ini%,adressen,absender
 if abs_privat=
-  iniwrite,% abs_privat="Absender privat...",%adr_ini%,adressen,abs_privat
+  iniwrite,% abs_privat:="Absender privat...",%adr_ini%,adressen,abs_privat
 
 if (a_guicontrol="drk2" or a_guicontrol="drk3" or out=2) {
   out:=%N%Col1 . "`n"
@@ -648,9 +642,9 @@ return zeile
 
 Print(DocText) {
 global adr_ini
-iniread,aPrinter,%adr_ini%,adressen,EtikettP
+iniread,aPrinter,%adr_ini%,adressen,EtikettP,%a_space%
 if aPrinter=
-  iniwrite,% aPrinter="Adressetiketten",%adr_ini%,adressen,EtikettP
+  iniwrite,% aPrinter:="Adressetiketten",%adr_ini%,adressen,EtikettP
 if DllCall("winspool.drv\OpenPrinterA", "str", aPrinter, "UInt *", hDC, "UInt",0) {
 	DocType:="RAW",DocName:="AHK Doc"
 	VarSetCapacity(DocInfo, 12, 0),NumPut(&DocName, DocInfo,0,"UInt"),NumPut(&DocType, DocInfo, 8, "UInt")
@@ -666,7 +660,7 @@ if DllCall("winspool.drv\OpenPrinterA", "str", aPrinter, "UInt *", hDC, "UInt",0
 
 Print2(DocText) {
 global adr_ini,absender,abs_privat,privat
-iniread,aPrinter,%adr_ini%,adressen,UmschlagP
+iniread,aPrinter,%adr_ini%,adressen,UmschlagP,%a_space%
 if aPrinter=
   iniwrite,%a_space%,adr_ini,adressen,UmschlagP
 iniread,xpos,%adr_ini%,adressen,Rand_L,193
@@ -766,7 +760,7 @@ ifwinexist,ahk_id %EditID%
 else
   if gui2pos>
     iniwrite,%gui2pos%,%adr_ini%,Adressen,gui2pos
-winGetPos, X, Y, , ,Telefonanruf
+winGetPos, X, Y, , ,Wählen
 if x>
   iniwrite,x%x%y%y%,%adr_ini%,Adressen,gui3pos
 else
