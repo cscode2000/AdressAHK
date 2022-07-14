@@ -649,13 +649,14 @@ if DllCall("winspool.drv\OpenPrinterA", "str", aPrinter, "UInt *", hDC, "UInt",0
 	DocType:="RAW",DocName:="AHK Doc"
 	VarSetCapacity(DocInfo, 12, 0),NumPut(&DocName, DocInfo,0,"UInt"),NumPut(&DocType, DocInfo, 8, "UInt")
 	if DllCall("winspool.drv\StartDocPrinterA", "UInt", hDC, "uint", 1, "UInt", &DocInfo) {
-    DllCall("winspool.drv\WritePrinter", "UInt", hDC, "UInt", &DocText, "uint", strlen(DocText), "UInt *", Written)
-    DllCall("winspool.drv\EndDocPrinterA", "UInt", hDC)
-  } else 
-    msgbox,,Sehtest,Fehler beim Drucken "StartDocPrinter"
-  DllCall("winspool.drv\ClosePrinterA", "UInt", hDC)
-} else 
-  msgbox,,Sehtest,Fehler bei Drucker %aPrinter%
+    if DllCall("winspool.drv\StartPagePrinter", "UInt", hDC) {
+       DllCall("winspool.drv\WritePrinter", "UInt", hDC, "UInt", &DocText, "uint", strlen(DocText), "UInt *", Written)
+       DllCall("winspool.drv\EndPagePrinter", "UInt", hDC)
+    }
+    DllCall("winspool.drv\EndDocPrinter", "UInt", hDC)
+  }
+  DllCall("winspool.drv\ClosePrinter", "UInt", hDC)
+}
 }
 
 Print2(DocText) {
@@ -757,9 +758,8 @@ ifwinexist,ahk_id %EditID%
   winactivate
   gosub,2ButtonSpeichern
 }
-else
-  if gui2pos>
-    iniwrite,%gui2pos%,%adr_ini%,Adressen,gui2pos
+if gui2pos>
+  iniwrite,%gui2pos%,%adr_ini%,Adressen,gui2pos
 winGetPos, X, Y, , ,Wählen
 if x>
   iniwrite,x%x%y%y%,%adr_ini%,Adressen,gui3pos
@@ -772,8 +772,4 @@ if x>
 else
   if gui4pos>
     iniwrite,%gui4pos%,%adr_ini%,Adressen,gui4pos
-if errorlevel {
-  ListLines
-  msgbox Fehler:%errorlevel%
-}
 exitapp
