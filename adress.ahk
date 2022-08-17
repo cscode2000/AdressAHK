@@ -1,3 +1,5 @@
+; https://www.autohotkey.com/boards/viewforum.php?f=10
+; https://github.com/cscode2000/AdressAHK
 ; v1.0
 ; cssettings.ini für Einstellungen
 ; Fensterpositionen speichern
@@ -25,8 +27,9 @@ Menu,Tray,Default,&Anzeigen
 settitlematchmode,Regex
 setworkingdir,%A_ScriptDir%
 adr_ini=%a_appdata%\cssettings.ini
-if 1=
-  database=%a_appdata%\adress.dat
+database=%a_appdata%\adress.dat
+if 1>
+  database=%1%
 iniread,guipos,%adr_ini%,adressen,guipos,%a_space%
 iniread,gui2pos,%adr_ini%,adressen,gui2pos,%a_space%
 iniread,gui3pos,%adr_ini%,adressen,gui3pos,%a_space%
@@ -601,7 +604,7 @@ DllCall("CloseHandle", "UInt", handle)
 WM_MOUSEMOVE(wParam,lParam) 
 { 
 Global hCurs,MainID,EditID
-ifwinactive,Wählen|Telefonanruf
+if A_Gui>2
   return
 static CurrControl, PrevControl, _TT
 MouseGetPos,,,,ctrl
