@@ -1,23 +1,27 @@
 ; https://www.autohotkey.com/boards/viewforum.php?f=10
 ; https://github.com/cscode2000/AdressAHK
+; v1.1:
+; Gruppe(n) "alle*" jetzt automatisch enthalten statt in Voreinstellungen
+; neue Gruppe "alle !obsolet", wenn Gruppe "obsolet" vorhanden (= alle außer obsoleten Daten)
+;
 ; v1.0
-; cssettings.ini fÃ¼r Einstellungen
+; cssettings.ini für Einstellungen
 ; Fensterpositionen speichern
 ; Fenster Resize
 ; Umschlagdruck
-; keine "letzte Ã„nderung" wenn nur Gruppe/Land geÃ¤ndert wurden
+; keine "letzte Änderung" wenn nur Gruppe/Land geändert wurden
 ; copy/mail/druck: noch nicht gespeicherte Eingaben verwenden
 ; Benennung Row->Col, Name...->NCol
 ; XP bis Win10 Anzeige vereinheitlicht
 ; diverse Optimierungen
 ;
 ; v0.1:
-; Check auf VerÃ¤nderungen vor Speichern/MehrnutzerfÃ¤higkeit
-; mit Land + letzter Ã„nderung
+; Check auf Veränderungen vor Speichern/Mehrnutzerfähigkeit
+; mit Land + letzter Änderung
 ; statt Buttons: Icons + Tooltips 
 ; variable Zahl Telefonnummern/Mailadressen
-; zum WÃ¤hlen der Tel.nr. mit Fritzbox fb_anruf.ahk aufrufen
-; Ã¼bergabe an Mailprogramm/Zwischenablage
+; zum Wählen der Tel.nr. mit Fritzbox fb_anruf.ahk aufrufen
+; übergabe an Mailprogramm/Zwischenablage
 ; direkte Etikettendruckeransteuerung (Nur-Text)
 #singleinstance force 
 #NoEnv
@@ -36,7 +40,7 @@ iniread,gui3pos,%adr_ini%,adressen,gui3pos,%a_space%
 iniread,gui4pos,%adr_ini%,adressen,gui4pos,%a_space%
 iniread,groups,%adr_ini%,adressen,groups,%a_space%
 if groups=
-  iniwrite,% groups:="Firma|Privat|obsolet|alle",%adr_ini%,adressen,groups
+  iniwrite,% groups:="Firma|Privat|obsolet",%adr_ini%,adressen,groups
 sysget,cpt,4
 sysget,bdrx,32
 sysget,bdry,33
@@ -51,17 +55,17 @@ if strlen(Col1)<7
 Mailer:=Col1
 
 suchtext_TT=Namensbestandteil suchen
-group_TT=Adressen-Gruppe wÃ¤hlen (Alt+g)
+group_TT=Adressen-Gruppe wählen (Alt+g)
 ButtonBearbeiten_TT=Adressdaten bearbeiten (Enter)
 ButtonNeu_TT=Neuen Eintrag erstellen (Einfg)
-ButtonLÃ¶schen_TT=Eintrag lÃ¶schen (Entf)
+ButtonLöschen_TT=Eintrag löschen (Entf)
 ButtonCopy_TT=Adresse in Zwischenablage kopieren (F4)
 Anrufen_TT=Telefonnummer anrufen (F5)
 EMailen_TT=E-Mail schreiben (F6)
 drk2_TT=Briefumschlag bedrucken (F8)
 ButtonDruck_TT=Adressetikett drucken (F9)
 privat_TT=Aktiviert = privater Absender wird gedruckt`nAusgegraut = kein Absender
-ButtonSettings_TT=Voreinstellungen Ã¶ffnen
+ButtonSettings_TT=Voreinstellungen öffnen
 Anrufen2_TT:=Anrufen_TT
 email2_TT:=EMailen_TT
 ButtonCopy2_TT:=ButtonCopy_TT
@@ -74,17 +78,20 @@ Gui,Margin,10,5
 Gui,Add,Edit,ys-1 W100 H20 gsearch vsuchtext,%suchtext%
 Gui,Add,Text,xs+35 ys+2,Suche
 Gui,Font,s11
-Gui,Add,ListView,x2 ys+25 r30 w615 gMyListView vMyListView Sort -Multi,Name|Name 2|StraÃŸe|PLZ|Ort|Telefon|E-Mail|Fax|Internet|Kdnr|Bemerkung|Gruppe|Land|l. Ã„nderung
+Gui,Add,ListView,x2 ys+25 r30 w615 gMyListView vMyListView Sort -Multi,Name|Name 2|Straße|PLZ|Ort|Telefon|E-Mail|Fax|Internet|Kdnr|Bemerkung|Gruppe|Land|l. Änderung
 f1=150|100|100|50|100|100|100|100|100|100|1|20|100|85
 loop,parse,f1,|
   LV_ModifyCol(a_index,a_loopfield)
 Gui,Font,s8
 Gui,Add,Text,Section x160 y8,&Gruppe:
-Gui,Add,ComboBox,ys-2 vgroup gsearch Choose1,%groups%
+if instr(groups,"obsolet")
+  Gui,Add,ComboBox,ys-2 vgroup gsearch Choose1,alle !obsolet|alle|%groups%
+else
+  Gui,Add,ComboBox,ys-2 vgroup gsearch Choose1,alle|%groups%
 Gui,Add,Button,xp ys w1 Default Hidden gButtonBearbeiten,Bearbeiten
 Gui,Add,Picture,ys-3 w20 h-1 vButtonBearbeiten gButtonBearbeiten Icon71,c:\windows\system32\shell32.dll
 Gui,Add,Picture,ys-3 w20 h-1 vButtonNeu gButtonNeu Icon100,c:\windows\system32\shell32.dll
-Gui,Add,Picture,ys-3 w20 h-1 vButtonLÃ¶schen gButtonLÃ¶schen Icon132,c:\windows\system32\shell32.dll
+Gui,Add,Picture,ys-3 w20 h-1 vButtonLöschen gButtonLöschen Icon132,c:\windows\system32\shell32.dll
 Gui,Add,Picture,ys-3 w20 h-1 vButtonCopy gButtonCopy Icon55,c:\windows\system32\shell32.dll
 Gui,Add,Picture,ys-3 w20 h-1 vAnrufen gButtonAnrufen Icon197,c:\windows\system32\shell32.dll
 if Mailer>
@@ -105,9 +112,9 @@ LV_Delete()
 GuiControl,Hide,MyListView
 Loop,parse,f1,`n,`r
 {
-  stringreplace,Col,A_Loopfield,Â¶,`n,a
+  stringreplace,Col,A_Loopfield,¶,`n,a
   StringSplit,Col,Col,|
-  if instr(Col1,suchtext) and (instr(group,Col12)=1 or group="alle")
+  if instr(Col1,suchtext) and ((instr(group,Col12)=1 and Col12>"") or group="alle" or (group="alle !obsolet" and !instr(Col12,"o")=1))
     LV_Add("", Col1, Col2,Col3,Col4,Col5,Col6,Col7,Col8,Col9,Col10,Col11,Col12,Col13,Col14)
 }
 GuiControl,Show,MyListView
@@ -128,7 +135,7 @@ WinGetPos, winX, winY, winW, winH, ahk_id %MainID%
 GuiControl, Move, MyListView, % "w" winW-6-bdrx "h" winH-52-2*bdry
 return
 
-#ifwinactive,^WÃ¤hlen$
+#ifwinactive,^Wählen$
 ~right::
 ~left::
 ~up::
@@ -148,7 +155,7 @@ F9::goto,ButtonDruck
 Del::
 GuiControlGet, Focus, Focus
 if (Focus="SysListView321")
-  goto,ButtonLÃ¶schen
+  goto,ButtonLöschen
 return
 ~down::
 GuiControlGet, Focus, Focus
@@ -160,7 +167,7 @@ return
 ButtonNeu:
 neuanlage=1
 
-ButtonLÃ¶schen:
+ButtonLöschen:
 neuanlage:=(neuanlage=1) ? neuanlage : -1
 
 ButtonBearbeiten:
@@ -170,7 +177,7 @@ if (A_GuiEvent="ColClick")
 neuanlage*=2
 ifwinexist,ahk_id %EditID% 
 {
-  msgbox,,Achtung,Erst anderes Adressdaten-Fenster schlieÃŸen!
+  msgbox,,Achtung,Erst anderes Adressdaten-Fenster schließen!
   winactivate
   return
 }
@@ -181,18 +188,18 @@ else {
   ControlGet, Zeile, List, Count Focused, SysListView321
   ControlGet, Zeile2, List, Focused, SysListView321
   stringreplace,zeile2,zeile2,%A_Tab%,|,a
-  stringreplace,zeile2,zeile2,`n,Â¶,a
+  stringreplace,zeile2,zeile2,`n,¶,a
   fileread,f1,%database%
   Loop,parse,f1,`n,`r
     if (A_Loopfield=zeile2) {
-      stringreplace,zeile2,zeile2,Â¶,`n,a
+      stringreplace,zeile2,zeile2,¶,`n,a
       stringsplit,Col,zeile2,|
       zeile2=
       break
     }
 }
 if (zeile2>"") {
-  msgbox,1,Adressdaten,Der Datensatz wurde zwischenzeitlich geÃ¤ndert und kann nicht bearbeitet werden.`n`nMÃ¶chten Sie die Datei neu einlesen?
+  msgbox,1,Adressdaten,Der Datensatz wurde zwischenzeitlich geändert und kann nicht bearbeitet werden.`n`nMöchten Sie die Datei neu einlesen?
 ifmsgbox,Ok
   run,%A_AhkPath% "%A_ScriptFullPath%"
 return
@@ -204,7 +211,7 @@ if (neuanlage<>-2) {
   Gui,2:Add,Edit,%EOpts% vNCol1,%Col1%
   Gui,2:Add,Text,%TOpts%,Na&me 2:
   Gui,2:Add,Edit,%EOpts% vNCol2,%Col2%
-  Gui,2:Add,Text,%TOpts%,St&raÃŸe:
+  Gui,2:Add,Text,%TOpts%,St&raße:
   Gui,2:Add,Edit,%EOpts% vNCol3,%Col3%
   Gui,2:Add,Text,%TOpts%,&PLZ / Ort:
   Gui,2:Add,Edit,x100 yp-3 W50 vNCol4,%Col4%
@@ -228,7 +235,7 @@ if (neuanlage<>-2) {
   Gui,2:Font,s8
   Gui,2:Add,Button,x410 y8 W80 vdrk3 gButtonDruck,Brie&fumschlag
   Gui,2:Add,Button,x410 y36 W80 vdrk gButtonDruck,Etiketten&druck
-  Gui,2:Add,Button,x410 y64 W80 vbÃ¼wa gButtonDruck,Etikett BÃ¼&Wa
+  Gui,2:Add,Button,x410 y64 W80 vbüwa gButtonDruck,Etikett Bü&Wa
   Gui,2:Add,Checkbox,x417 y91 vprivat Check3,Pri&vatabs.
 
   Gui,2:Add,Picture,x430 y129 w32 h-1 vAnrufen2 gButtonAnrufen Icon197,c:\windows\system32\shell32.dll
@@ -239,7 +246,7 @@ if (neuanlage<>-2) {
   Gui,2:Add,Picture,x436 y240 w20 h-1 vButtonCopy2 gButtonCopy Icon55,c:\windows\system32\shell32.dll
  
   Col14n:=substr(Col14,5,2) . "." . substr(Col14,3,2) . "." . substr(Col14,1,2) . " " . substr(Col14,7,2) . ":" . substr(Col14,9,2)
-  Gui,2:Add,Text,x410 y300 0x2 vnx1,letzte Ã„nderung:`n%Col14n%
+  Gui,2:Add,Text,x410 y300 0x2 vnx1,letzte Änderung:`n%Col14n%
   Gui,2:Add,Button,% "Default x410 W80 vSpeichern y" 373-cpt-2*bdry,&Speichern
   Gui,2:Add,Button,x410 yp+28 W80 vnx2,A&bbrechen
   Gui,2: +LastFound +Resize
@@ -251,11 +258,11 @@ if (neuanlage<>-2) {
 2ButtonSpeichern:
 gosub,checkchanged 
 if (neuanlage=-2) {
-  msgbox,257,Adressdaten,Dieser Datensatz wird unwiderruflich gelÃ¶scht:`n`n%alt%
+  msgbox,257,Adressdaten,Dieser Datensatz wird unwiderruflich gelöscht:`n`n%alt%
   ifmsgbox,OK
   ifwinexist,ahk_id %EditID%
   {
-    msgbox,,Achtung,Erst anderes Adressdaten-Fenster schlieÃŸen!
+    msgbox,,Achtung,Erst anderes Adressdaten-Fenster schließen!
     winactivate
   }
   else
@@ -272,11 +279,11 @@ if (neuanlage=-2) {
         LV_Delete(zeile)
         Gui,Show,,% "Adressen (" . LV_GetCount() . ")"
       } else
-        msgbox,,Adressdaten,Vorgang nicht mÃ¶glich`, da die Daten zur Zeit gesperrt sind.
+        msgbox,,Adressdaten,Vorgang nicht möglich`, da die Daten zur Zeit gesperrt sind.
     }
     else
     {
-      msgbox,1,Adressdaten,Vorgang nicht mÃ¶glich`, da die Daten inzwischen geÃ¤ndert wurden.`n`nMÃ¶chten Sie die Daten neu einlesen?
+      msgbox,1,Adressdaten,Vorgang nicht möglich`, da die Daten inzwischen geändert wurden.`n`nMöchten Sie die Daten neu einlesen?
       ifmsgbox,Ok
         run,%A_AhkPath% "%A_ScriptFullPath%"
     }
@@ -288,7 +295,7 @@ if (neuanlage=-2) {
     return
   }
   if (FocusedControl<>"Speichern") 
-    msgbox,35,Adressdaten,GeÃ¤nderte Daten speichern?
+    msgbox,35,Adressdaten,Geänderte Daten speichern?
   ifmsgbox,Cancel
     return
   ifmsgbox,No
@@ -315,11 +322,11 @@ fileclose(hnd)
       if filewrite(database,f1) {
         settimer,list_akt,-1
       } else
-        msgbox,,Adressdaten,Speichern nicht mÃ¶glich`, da die Daten zur Zeit gesperrt sind.
+        msgbox,,Adressdaten,Speichern nicht möglich`, da die Daten zur Zeit gesperrt sind.
     }
     else 
     {
-      msgbox,1,Adressdaten,Die Daten kÃ¶nnen nicht gespeichert werden`, da sie inzwischen geÃ¤ndert wurden.`n`nMÃ¶chten Sie die Daten neu einlesen?
+      msgbox,1,Adressdaten,Die Daten können nicht gespeichert werden`, da sie inzwischen geändert wurden.`n`nMöchten Sie die Daten neu einlesen?
       ifmsgbox,Ok
       {
         onexit
@@ -334,7 +341,7 @@ return
 2GuiEscape:
 2GuiClose:
 gosub,checkchanged
-if (alt=neu) or (DllCall("MessageBox", "Int", "0", "Str", "Verlassen und Ã„nderungen verwerfen?", "Str", "Adressdaten", "Int", 35)=6)
+if (alt=neu) or (DllCall("MessageBox", "Int", "0", "Str", "Verlassen und Änderungen verwerfen?", "Str", "Adressdaten", "Int", 35)=6)
   gosub,savepos_destroy2
 return
 
@@ -349,7 +356,7 @@ loop,11
 GuiControl, Move, NCol5, % "w" winW-265
 GuiControl, Move, drk3, % "x" winW-100
 GuiControl, Move, drk, % "x" winW-100
-GuiControl, Move, bÃ¼wa, % "x" winW-100
+GuiControl, Move, büwa, % "x" winW-100
 GuiControl, Move, privat, % "x" winW-93
 GuiControl, Move, ButtonCopy2, % "x" winW-74
 GuiControl, Move, Anrufen2, % "x" winW-80
@@ -366,10 +373,10 @@ return
 
 list_akt:
 gosub,savepos_destroy2
-stringreplace,NCol6,NCol6,Â¶,`n,a
-stringreplace,NCol7,NCol7,Â¶,`n,a
-stringreplace,NCol11,NCol11,Â¶,`n,a
-if instr(NCol1,suchtext) and (instr(group,NCol12)=1 or group="alle")
+stringreplace,NCol6,NCol6,¶,`n,a
+stringreplace,NCol7,NCol7,¶,`n,a
+stringreplace,NCol11,NCol11,¶,`n,a
+if instr(NCol1,suchtext) and ((instr(group,NCol12)=1 and NCol12>"") or group="alle" or (group="alle !obsolet" and !instr(NCol12,"o")=1))
   if neuanlage=2
     LV_Add("Focus Select Vis",NCol1,NCol2,NCol3,NCol4,NCol5,NCol6,NCol7,NCol8,NCol9,NCol10,NCol11,NCol12,NCol13,Col14n)
   else
@@ -387,7 +394,7 @@ GuiControlGet, FocusedControl, FocusV
 alt_basic:="",neu_basic:="",f2:=""
 loop,13
 {
-  stringreplace,NCol%a_index%,NCol%a_index%,`n,Â¶,a 
+  stringreplace,NCol%a_index%,NCol%a_index%,`n,¶,a 
   stringreplace,NCol%a_index%,NCol%a_index%,|,,a
 }
 loop,10
@@ -397,7 +404,7 @@ loop,10
 }
 alt_basic.=Col11
 alt=%alt_basic%|%Col12%|%Col13%
-stringreplace,alt,alt,`n,Â¶,a
+stringreplace,alt,alt,`n,¶,a
 neu_basic.=NCol11
 neu=%neu_basic%|%NCol12%|%NCol13%
 return
@@ -417,7 +424,7 @@ tooltip
 return
 
 ButtonAnrufen:
-ifwinexist,^WÃ¤hlen$
+ifwinexist,^Wählen$
 {
   winactivate
   return
@@ -428,10 +435,10 @@ if winactive("ahk_id " MainID)
   ControlGet, NCol6, List, Focused Col6, SysListView321
 var1:=NCol6
 nr_anz:=1
-regexmatch(var1,"([^\r\nÂ¶]+)",tel)
-Gui,3:Add,Text,,Welche Nummer soll gewÃ¤hlt werden?`n
+regexmatch(var1,"([^\r\n¶]+)",tel)
+Gui,3:Add,Text,,Welche Nummer soll gewählt werden?`n
 Gui,3:Add,Radio,x20 gNrSelect vtel Checked,%tel1%
-loop,parse,var1,`nÂ¶,`r
+loop,parse,var1,`n¶,`r
   if (a_index>1) {
     regexmatch(A_Loopfield,"\D*([\d\s\-/]+).*",nr)
     if strlen(nr1)>3 or (strlen(nr1)>9 and substr(nr1,1,1)="0") {
@@ -443,7 +450,7 @@ loop,parse,var1,`nÂ¶,`r
 if (nr_anz>1) and (a_guicontrol<>"Anrufen") { 
   Gui,3:Add,Button,Default Section x12 yp+40 W80,&OK
   Gui,3:Add,Button,xp+110 ys W80,&Abbrechen
-  Gui,3:Show,%gui3pos%,WÃ¤hlen
+  Gui,3:Show,%gui3pos%,Wählen
   return
 }
 
@@ -454,7 +461,7 @@ if CursorTaste=1
 3ButtonOK:
 Gui,3:Submit
 
-winGetPos, X, Y, , ,WÃ¤hlen
+winGetPos, X, Y, , ,Wählen
 if x>
   gui3pos=x%x%y%y%
 Gui,3:Destroy
@@ -464,7 +471,7 @@ if nr>
 {
   Gui,4:Add,Text,Section x12 y20,Nummer: 
   Gui,4:Add,Edit,xs ys W250 -WantReturn H20 vnr,%nr%
-  Gui,4:Add,Checkbox,gclip_jn ys+3,Nummer Ã¼bermitteln
+  Gui,4:Add,Checkbox,gclip_jn ys+3,Nummer übermitteln
   Gui,4:Add,Button,Default Section x12 W80,Ok
   Gui,4:Add,Button,xp+90 ys W80,&Abbrechen
   ControlGet, NCol1, List, Focused Col1, SysListView321
@@ -491,7 +498,7 @@ if nr>
 return
 3ButtonAbbrechen:
 3GuiEscape:
-winGetPos, X, Y, , ,WÃ¤hlen
+winGetPos, X, Y, , ,Wählen
 gui3pos=x%x%y%y%
 Gui,3:Destroy
 return
@@ -518,7 +525,7 @@ Gui,2:Submit,NoHide
 iniread,absender,%adr_ini%,adressen,absender,%a_space%
 iniread,abs_privat,%adr_ini%,adressen,abs_privat,%a_space%
 if absender=
-  iniwrite,% absender:="Absender GeschÃ¤ft...",%adr_ini%,adressen,absender
+  iniwrite,% absender:="Absender Geschäft...",%adr_ini%,adressen,absender
 if abs_privat=
   iniwrite,% abs_privat:="Absender privat...",%adr_ini%,adressen,abs_privat
 
@@ -539,8 +546,8 @@ if (a_guicontrol="drk2" or a_guicontrol="drk3" or out=2) {
   if privat<>-1
     out.="TEXT 1 240 0 " . (privat=1 ? abs_privat : absender) . "`n"
   ypos:=(privat=-1) ? -40 : 10
-  if (a_guicontrol="bÃ¼wa") {
-    ypos+=40,out.="TEXT 2 240 " . ypos . " BÃœWA`n"
+  if (a_guicontrol="büwa") {
+    ypos+=40,out.="TEXT 2 240 " . ypos . " BÜWA`n"
   }
   ypos+=40,out.="TEXT 2 240 " . ypos . " " . %N%Col1 . "`n"
   if (%N%Col2>"") {
@@ -632,14 +639,14 @@ return
 }
 
 ansi2ascii(Zeile) {
-stringreplace,zeile,zeile,Ã„,Å½,a
-stringreplace,zeile,zeile,Ã–,â„¢,a
-stringreplace,zeile,zeile,Ãœ,Å¡,a
-stringreplace,zeile,zeile,Ã¤,â€ž,a
-stringreplace,zeile,zeile,Ã¶,â€,a
-stringreplace,zeile,zeile,Ã¼,Â,a
-stringreplace,zeile,zeile,ÃŸ,Ã¡,a
-stringreplace,zeile,zeile,Ã©,â€š,a
+stringreplace,zeile,zeile,Ä,Ž,a
+stringreplace,zeile,zeile,Ö,™,a
+stringreplace,zeile,zeile,Ü,š,a
+stringreplace,zeile,zeile,ä,„,a
+stringreplace,zeile,zeile,ö,”,a
+stringreplace,zeile,zeile,ü,,a
+stringreplace,zeile,zeile,ß,á,a
+stringreplace,zeile,zeile,é,‚,a
 return zeile
 }
 
@@ -763,7 +770,7 @@ ifwinexist,ahk_id %EditID%
 }
 if gui2pos>
   iniwrite,%gui2pos%,%adr_ini%,Adressen,gui2pos
-winGetPos, X, Y, , ,WÃ¤hlen
+winGetPos, X, Y, , ,Wählen
 if x>
   iniwrite,x%x%y%y%,%adr_ini%,Adressen,gui3pos
 else
