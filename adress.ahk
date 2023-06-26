@@ -4,7 +4,7 @@
 ; Gruppe(n) "alle*" jetzt automatisch enthalten statt in Voreinstellungen
 ; neue Gruppe "alle !obsolet", wenn Gruppe "obsolet" vorhanden (= alle außer obsoleten Daten)
 ;
-; v1.0
+; v1.0:
 ; cssettings.ini für Einstellungen
 ; Fensterpositionen speichern
 ; Fenster Resize
@@ -23,6 +23,17 @@
 ; zum Wählen der Tel.nr. mit Fritzbox fb_anruf.ahk aufrufen
 ; übergabe an Mailprogramm/Zwischenablage
 ; direkte Etikettendruckeransteuerung (Nur-Text)
+;
+; Einstellungen in csettings.ini:
+; [Adressen]
+; groups = Adressgruppen, getrennt mit |, sollten sich im 1.Buchstaben unterscheiden
+; absender= Absenderzeile beim Ausdruck
+; abs_privat= alternative Absenderzeile "privat"
+; EtikettP= Druckername für Adressetiketten, unterstützter Typ: Cognitive CL422
+; UmschlagP= Druckername für Briefumschläge
+; Rand_O= oberer Rand in mm
+; Rand_L= linker Rand in mm
+;
 #singleinstance force 
 #NoEnv
 Menu,Tray,Icon,pifmgr.dll,16
@@ -40,7 +51,7 @@ iniread,gui3pos,%adr_ini%,adressen,gui3pos,%a_space%
 iniread,gui4pos,%adr_ini%,adressen,gui4pos,%a_space%
 iniread,groups,%adr_ini%,adressen,groups,%a_space%
 if groups=
-  iniwrite,% groups:="Firma|Privat|obsolet",%adr_ini%,adressen,groups
+  iniwrite,% groups:="Firma|Privat",%adr_ini%,adressen,groups
 sysget,cpt,4
 sysget,bdrx,32
 sysget,bdry,33
@@ -186,6 +197,8 @@ if neuanlage=2
     Col%a_index%:=""
 else {
   ControlGet, Zeile, List, Count Focused, SysListView321
+  if zeile=0
+    return
   ControlGet, Zeile2, List, Focused, SysListView321
   stringreplace,zeile2,zeile2,%A_Tab%,|,a
   stringreplace,zeile2,zeile2,`n,¶,a
@@ -412,6 +425,8 @@ return
 ButtonCopy:
 if winactive("ahk_id " MainID) {
   ControlGet, Zeile, List, Focused, SysListView321
+  if zeile=
+    return
   stringsplit,Col,zeile,%A_Tab%
 } else
   N=N
@@ -518,6 +533,8 @@ out=2
 ButtonDruck:
 if winactive("ahk_id " MainID) {
   ControlGet, Zeile, List, Focused, SysListView321
+  if zeile=
+    return
   stringsplit,Col,zeile,%A_Tab%
 } else
   N=N
