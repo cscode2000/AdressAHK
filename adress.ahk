@@ -1,5 +1,8 @@
 ; https://www.autohotkey.com/boards/viewforum.php?f=10
 ; https://github.com/cscode2000/AdressAHK
+; v1.2: 
+; Sortierreihenfolge bei Umlauten korrigiert
+; 
 ; v1.1:
 ; Gruppe(n) "alle*" jetzt automatisch enthalten statt in Voreinstellungen
 ; neue Gruppe "alle !obsolet", wenn Gruppe "obsolet" vorhanden (= alle auﬂer obsoleten Daten)
@@ -129,6 +132,10 @@ Loop,parse,f1,`n,`r
     LV_Add("", Col1, Col2,Col3,Col4,Col5,Col6,Col7,Col8,Col9,Col10,Col11,Col12,Col13,Col14)
 }
 GuiControl,Show,MyListView
+LV_ModifyCol(1, "CaseLocale")
+LV_ModifyCol(2, "CaseLocale")
+LV_ModifyCol(3, "CaseLocale")
+LV_ModifyCol(5, "CaseLocale")
 blockinput,off
 Gui,Show,%guipos%,% "Adressen (" . LV_GetCount() . ")"
 guipos=
@@ -425,7 +432,7 @@ return
 ButtonCopy:
 if winactive("ahk_id " MainID) {
   ControlGet, Zeile, List, Focused, SysListView321
-  if zeile=
+  if zeile=0
     return
   stringsplit,Col,zeile,%A_Tab%
 } else
@@ -533,7 +540,7 @@ out=2
 ButtonDruck:
 if winactive("ahk_id " MainID) {
   ControlGet, Zeile, List, Focused, SysListView321
-  if zeile=
+  if zeile=0
     return
   stringsplit,Col,zeile,%A_Tab%
 } else
